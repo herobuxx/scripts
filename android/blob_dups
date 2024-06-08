@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# 
+# Copyright (C) 2024 Lilium Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
 # File containing the list of proprietary files
 FILE="proprietary-files.txt"
 
