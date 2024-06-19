@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <remote_url> <branch> <batch_size>"
+    exit 1
+fi
+
+# Assign command-line arguments to variables
+REMOTE_URL=$1
+BRANCH=$2
+BATCH_SIZE=$3
+
+# Add the remote URL with a specified name
+REMOTE=lilium
+git remote add $REMOTE $REMOTE_URL
+
+# Fetch the latest changes from the remote repository
+git fetch $REMOTE
+
+# Determine the range of commits to push
+if git show-ref --quiet --verify refs/remotes/$REMOTE/$BRANCH; then
+    range=$REMOTE/$BRANCH..HEAD
+else
+    range=HEAD
+fi
+
+# Count the number of commits in the range
+n=$(git log --first-parent --format=format:x $range | wc -l)
+
+# Loop through the commits in batches and push them
+for i in $(seq $n -$BATCH_SIZE 1); do
+    h=$(git log --first-parent --reverse --format=format:%H --skip $i -n1)
+    echo "Pushing $h..."
+    git push $REMOTE $h:refs/heads/$BRANCH
+done
+
+# Push the HEAD to the main branch on the remote
+git push $REMOTE HEAD:$BRANCH
