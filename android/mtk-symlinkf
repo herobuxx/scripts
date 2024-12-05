@@ -42,7 +42,7 @@ main() {
     local dir="$2"
 
     # Call the symlinkfinder function and log results
-    symlinkfinder "$soc" "$dir" | tee "${soc}_symlinks.log"
+    symlinkfinder "$soc" "$dir" | tee "${soc}_symlinks.txt"
 }
 
 # Execute the script
