@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #
 #  Apache License
@@ -9,40 +8,42 @@
 #  Copyright 2024 Riyon George <riyon336@gmail.com>
 #
 
-# Function to copy files from soc directories to their parent directories
+# Function to find and generate symlinks
 symlinkfinder() {
     local soc="$1"
-    local directories=(
-        "vendor"
-    )
+    local dir="$2"
 
-    # Loop through each directory and copy files to their parent directories
-    for dir in "${directories[@]}"; do
-        find "$dir" -type f | while read -r blobs; do
-            # Replace the soc portion of the symlink with an empty string
-            symlink="${blobs/\/$soc}"
+    # Check if the directory exists
+    if [ ! -d "$dir" ]; then
+        echo "Error: Directory '$dir' does not exist."
+        return 1
+    fi
 
-	    # Remove trailing soc
-            symlink="${symlink%.$soc}"
+    find "$dir" -type f | while read -r blob; do
+        # Generate symlink path by removing the SOC suffix
+        symlink="${blob/\/$soc/}"
+        symlink="${symlink%.$soc}"
 
-	    # Check if the symlink is different from the file path and if it doesn't match the file path without the soc suffix
-            if [ "$symlink" != "$blobs" ] && [ "${blobs%.$soc}" != "$symlink" ]; then
-                echo "${blobs};SYMLINK=${symlink}"
-            fi
-        done
+        # Check if symlink path is valid and differs from original path
+        if [ "$symlink" != "$blob" ]; then
+            echo "${blob};SYMLINK=${symlink}"
+        fi
     done
 }
 
 # Main function
 main() {
-    if [ "$#" -ne 1 ]; then
-        echo "Usage: $0 <soc>"
+    if [ "$#" -ne 2 ]; then
+        echo "Usage: $0 <soc> <directory>"
         exit 1
     fi
 
-    soc="$1"
-    symlinkfinder "$soc"
+    local soc="$1"
+    local dir="$2"
+
+    # Call the symlinkfinder function and log results
+    symlinkfinder "$soc" "$dir" | tee "${soc}_symlinks.log"
 }
 
-# Run the main function with the provided argument
+# Execute the script
 main "$@"
