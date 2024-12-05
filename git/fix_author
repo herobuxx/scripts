@@ -1,0 +1,34 @@
+#
+# Copyright (C) 2022 Dhina17 <dhinalogu@gmail.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+set -e
+
+# Check for args
+if [$1 == ""]
+then
+    echo "$0: Please give a patch link"
+    exit 1 # error
+fi
+
+# Only allow to run in a git repository
+GIT_STATUS=$(git status > /dev/null 2>&1; echo $?)
+if [$GIT_STATUS != 0]
+then
+    echo "$0: Not a git repository!"
+    exit 1 # error
+fi
+
+# Get the patch link from the args
+PATCH_LINK=$1
+# Get the patch
+PATCH=$(curl -s $PATCH_LINK)
+
+# Retrieve the author and date from the patch
+AUTHOR=$(grep "^From:.\+@" <<< $PATCH | sed "s/From://g")
+DATE=$(grep "^Date:" <<< $PATCH | sed "s/Date://g")
+
+# Append to the current commit
+git commit --amend --author="$AUTHOR" --date="$DATE"
