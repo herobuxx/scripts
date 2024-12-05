@@ -1,0 +1,5 @@
+# Scripts
+
+A repository containing useful scripts (at least to me).
+
+Some of them are kanged fropm other devs, while others are written by me. Credits are included within each script or commit.

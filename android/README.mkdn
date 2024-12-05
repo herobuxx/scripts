@@ -1,0 +1,28 @@
+# Android related scripts
+
+## `blob_dups`
+
+This script checks for duplicate entries in your `proprietary_files.txt` file in a single run.
+
+### Usage
+```
+./blob_dups # Run inside the directory of your device tree
+```
+
+## `oem_kernel_rebase.py`
+
+This script rebases OEM kernel changes and splits them into smaller commits.
+
+### Usage
+```
+python oem_kernel_rebase.py # Run inside the directory of your OEM kernel repository
+```
+
+## `mtk-symlinkf`
+
+This script identifies symlinks in your device's stock firmware.
+
+### Usage
+```
+./mtk-symlinkf soc_model path/to/your/stock/dump
+```
