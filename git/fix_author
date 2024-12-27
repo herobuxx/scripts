@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (C) 2022 Dhina17 <dhinalogu@gmail.com>
 #
@@ -7,28 +8,40 @@
 set -e
 
 # Check for args
-if [$1 == ""]
-then
-    echo "$0: Please give a patch link"
+if [ -z "$1" ]; then
+    echo "$0: Please provide a patch link"
     exit 1 # error
 fi
 
 # Only allow to run in a git repository
-GIT_STATUS=$(git status > /dev/null 2>&1; echo $?)
-if [$GIT_STATUS != 0]
-then
+if ! git status > /dev/null 2>&1; then
     echo "$0: Not a git repository!"
     exit 1 # error
 fi
 
 # Get the patch link from the args
 PATCH_LINK=$1
+
+# Append ".patch" if it's not present
+if [[ $PATCH_LINK != *.patch ]]; then
+    PATCH_LINK="${PATCH_LINK}.patch"
+fi
+
 # Get the patch
-PATCH=$(curl -s $PATCH_LINK)
+PATCH=$(curl -s "$PATCH_LINK")
+if [ -z "$PATCH" ]; then
+    echo "$0: Failed to retrieve patch from $PATCH_LINK"
+    exit 1 # error
+fi
 
 # Retrieve the author and date from the patch
-AUTHOR=$(grep "^From:.\+@" <<< $PATCH | sed "s/From://g")
-DATE=$(grep "^Date:" <<< $PATCH | sed "s/Date://g")
+AUTHOR=$(grep "^From:.\+@" <<< "$PATCH" | sed "s/From://g")
+DATE=$(grep "^Date:" <<< "$PATCH" | sed "s/Date://g")
+
+if [ -z "$AUTHOR" ] || [ -z "$DATE" ]; then
+    echo "$0: Failed to parse author or date from the patch"
+    exit 1 # error
+fi
 
 # Append to the current commit
 git commit --amend --author="$AUTHOR" --date="$DATE"
