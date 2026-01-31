@@ -1,0 +1,39 @@
+#!/bin/bash
+
+MOUNT_POINT="/run/media/buxx/DATA"
+TEST_FILE="$MOUNT_POINT/test.tmp"
+FILE_SIZE="1G"   # size of test file for write/read test
+
+echo "Testing write speed..."
+sync
+WRITE_START=$(date +%s.%N)
+dd if=/dev/zero of="$TEST_FILE" bs=1M count=1024 oflag=direct status=progress
+sync
+WRITE_END=$(date +%s.%N)
+
+WRITE_TIME=$(echo "$WRITE_END - $WRITE_START" | bc)
+WRITE_SPEED=$(echo "scale=2; 1024 / $WRITE_TIME" | bc)
+
+echo "Write test completed:"
+echo "  File size: $FILE_SIZE"
+echo "  Time taken: $WRITE_TIME seconds"
+echo "  Write speed: $WRITE_SPEED MB/s"
+echo
+
+echo "Testing read speed with direct I/O (bypassing cache)..."
+READ_START=$(date +%s.%N)
+dd if="$TEST_FILE" of=/dev/null bs=1M status=progress iflag=direct
+READ_END=$(date +%s.%N)
+
+READ_TIME=$(echo "$READ_END - $READ_START" | bc)
+READ_SPEED=$(echo "scale=2; 1024 / $READ_TIME" | bc)
+
+echo "Read test completed:"
+echo "  File size: $FILE_SIZE"
+echo "  Time taken: $READ_TIME seconds"
+echo "  Read speed: $READ_SPEED MB/s"
+echo
+
+echo "Cleaning up..."
+rm -f "$TEST_FILE"
+echo "Done."

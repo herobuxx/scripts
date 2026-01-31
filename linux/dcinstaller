@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -e
+
+# Variables
+DISCORD_URL="https://discord.com/api/download?platform=linux&format=deb"
+TEMP_DIR="/tmp/discord-install"
+DEB_FILE="$TEMP_DIR/discord.deb"
+
+# Make temp dir
+mkdir -p "$TEMP_DIR"
+cd "$TEMP_DIR"
+
+echo "[*] Downloading latest Discord .deb package..."
+curl -L "$DISCORD_URL" -o "$DEB_FILE"
+
+# Check if debtap exists, otherwise fallback
+if command -v debtap >/dev/null 2>&1; then
+    echo "[*] Converting .deb to Arch package with debtap..."
+    sudo debtap -q "$DEB_FILE"
+    PKG=$(ls discord-*.pkg.tar.zst | sort -V | tail -n1)
+    echo "[*] Installing package $PKG..."
+    sudo pacman -U --noconfirm "$PKG"
+else
+    echo "[!] debtap not found. Falling back to manual extraction."
+
+    # Extract deb file
+    ar x "$DEB_FILE"
+    tar -xvf data.tar.* -C "$TEMP_DIR"
+
+    # Install to /opt/discord and link binary
+    sudo rm -rf /opt/discord
+    sudo mv usr/share/discord /opt/discord
+    sudo ln -sf /opt/discord/Discord /usr/bin/discord
+
+    echo "[*] Installed Discord manually to /opt/discord"
+fi
+
+echo "[*] Done. You can now run Discord with 'discord'"
