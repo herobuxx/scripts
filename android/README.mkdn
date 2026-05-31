@@ -1,28 +1,46 @@
-# Android related scripts
+# Android Scripts
 
-## `blob_dups`
+A bunch of scripts for ROMs, kernels, and general Android stuff.
 
-This script checks for duplicate entries in your `proprietary_files.txt` file in a single run.
+## Scripts
 
-### Usage
-```
-./blob_dups # Run inside the directory of your device tree
-```
-
-## `oem_kernel_rebase.py`
-
-This script rebases OEM kernel changes and splits them into smaller commits.
-
-### Usage
-```
-python oem_kernel_rebase.py # Run inside the directory of your OEM kernel repository
+### `blob_dups`
+Checks for duplicate files in `proprietary-files.txt`. Run it where the file is.
+```bash
+./blob_dups
 ```
 
-## `mtk-symlinkf`
+### `motoflash.py`
+Flashes Motorola firmware using `flashfile.xml` via fastboot.
+```bash
+python3 motoflash.py [firmware_dir]
 
-This script identifies symlinks in your device's stock firmware.
-
-### Usage
+# check things first without flashing:
+python3 motoflash.py [firmware_dir] --dry-run
 ```
-./mtk-symlinkf soc_model path/to/your/stock/dump
+
+### `mtk-symlinkf`
+Finds symlinks in MediaTek firmware dumps.
+```bash
+./mtk-symlinkf <soc> <dump_dir>
+```
+
+### `oem_kernel_rebase.py`
+Groups and commits changes by directory. Run this at the root of your git repo.
+```bash
+python3 oem_kernel_rebase.py
+```
+
+### `reorder_blobs`
+Sorts `proprietary-files.txt` alphabetically section by section.
+```bash
+python3 reorder_blobs
+```
+
+### `mi_debloat`
+Removes MIUI and HyperOS bloatware via ADB. Make sure USB debugging is on.
+```bash
+cd mi_debloat
+chmod +x debloat
+./debloat
 ```
