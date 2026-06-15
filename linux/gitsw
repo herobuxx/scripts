@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+# Directory to store profiles
+PROFILE_DIR="$HOME/.git_profiles"
+ACTIVE_CONFIG="$HOME/.gitconfig"
+ACTIVE_CREDS="$HOME/.git-credentials"
+
+# Ensure profile directory exists
+mkdir -p "$PROFILE_DIR"
+
+show_help() {
+    echo "Git Profile Manager"
+    echo "Usage: gitprofile [command] [profile_name]"
+    echo ""
+    echo "Commands:"
+    echo "  list             List all profiles and show the active one"
+    echo "  create [name]    Create a new profile from current active git config"
+    echo "  switch [name]    Switch to an existing profile"
+    echo "  delete [name]    Delete a profile"
+    echo "  help             Show this help message"
+}
+
+get_active_profile() {
+    if [ -f "$PROFILE_DIR/.active" ]; then
+        cat "$PROFILE_DIR/.active"
+    else
+        echo "None (Using current default config)"
+    fi
+}
+
+case "$1" in
+    list|"")
+        echo "--- Available Profiles ---"
+        active=$(get_active_profile)
+        
+        # Loop through subdirectories in the profile storage
+        found=0
+        for d in "$PROFILE_DIR"/*/; do
+            [ -e "$d" ] || break
+            name=$(basename "$d")
+            if [ "$name" = "$active" ]; then
+                echo " * $name (ACTIVE)"
+            else
+                echo "   $name"
+            fi
+            found=1
+        done
+        
+        if [ $found -eq 0 ]; then
+            echo "No profiles created yet."
+        fi
+        echo "--------------------------"
+        echo "Current Active Profile: $active"
+        ;;
+
+    create)
+        if [ -z "$2" ]; then
+            echo "Error: Please specify a profile name."
+            exit 1
+        fi
+        
+        TARGET_DIR="$PROFILE_DIR/$2"
+        if [ -d "$TARGET_DIR" ]; then
+            echo "Error: Profile '$2' already exists."
+            exit 1
+        fi
+
+        mkdir -p "$TARGET_DIR"
+        
+        # Backup current configs if they exist
+        [ -f "$ACTIVE_CONFIG" ] && cp "$ACTIVE_CONFIG" "$TARGET_DIR/.gitconfig"
+        [ -f "$ACTIVE_CREDS" ] && cp "$ACTIVE_CREDS" "$TARGET_DIR/.git-credentials"
+        
+        echo "$2" > "$PROFILE_DIR/.active"
+        echo "Profile '$2' created and set as active based on current Git settings."
+        ;;
+
+    switch)
+        if [ -z "$2" ]; then
+            echo "Error: Please specify a profile name to switch to."
+            exit 1
+        fi
+
+        TARGET_DIR="$PROFILE_DIR/$2"
+        if [ ! -d "$TARGET_DIR" ]; then
+            echo "Error: Profile '$2' does not exist."
+            exit 1
+        fi
+
+        # Remove current files/symlinks to avoid conflicts
+        rm -f "$ACTIVE_CONFIG" "$ACTIVE_CREDS"
+
+        # Copy the profile files to the active positions
+        [ -f "$TARGET_DIR/.gitconfig" ] && cp "$TARGET_DIR/.gitconfig" "$ACTIVE_CONFIG"
+        [ -f "$TARGET_DIR/.git-credentials" ] && cp "$TARGET_DIR/.git-credentials" "$ACTIVE_CREDS"
+
+        echo "$2" > "$PROFILE_DIR/.active"
+        echo "Switched to profile: $2"
+        ;;
+
+    delete)
+        if [ -z "$2" ]; then
+            echo "Error: Please specify a profile name to delete."
+            exit 1
+        fi
+
+        TARGET_DIR="$PROFILE_DIR/$2"
+        if [ ! -d "$TARGET_DIR" ]; then
+            echo "Error: Profile '$2' does not exist."
+            exit 1
+        fi
+
+        # If deleting the active profile, clear the active pointer
+        active=$(get_active_profile)
+        if [ "$2" = "$active" ]; then
+            rm -f "$PROFILE_DIR/.active"
+            echo "Warning: Deleting the currently active profile tracking."
+        fi
+
+        rm -rf "$TARGET_DIR"
+        echo "Profile '$2' deleted successfully."
+        ;;
+
+    *)
+        show_help
+        ;;
+esac
